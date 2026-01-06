@@ -42,58 +42,58 @@ def test_dosage_validation_green():
 # # ========== REFACTOR PHASE ==========
 # # Create clean, reusable functions
 
-# class ClinicalDataValidator:
-#     """Refactored validator class"""
+class ClinicalDataValidator:
+    """Refactored validator class"""
     
-#     @staticmethod
-#     def is_valid_filename(filename):
-#         pattern = r'^CLINICALDATA_\d{14}\.CSV$'
-#         return re.match(pattern, filename, re.IGNORECASE) is not None
+    @staticmethod
+    def is_valid_filename(filename):
+        pattern = r'^CLINICALDATA_\d{14}\.CSV$'
+        return re.match(pattern, filename, re.IGNORECASE) is not None
     
-#     @staticmethod
-#     def is_valid_dosage(dosage):
-#         try:
-#             return int(dosage) > 0
-#         except ValueError:
-#             return False
+    @staticmethod
+    def is_valid_dosage(dosage):
+        try:
+            return int(dosage) > 0
+        except ValueError:
+            return False
 
-# def test_refactored_validator():
-#     """REFACTOR: Test the clean validator class"""
-#     validator = ClinicalDataValidator()
+def test_refactored_validator():
+    """REFACTOR: Test the clean validator class"""
+    validator = ClinicalDataValidator()
     
-#     # Test valid cases
-#     assert validator.is_valid_filename("CLINICALDATA_20240101120000.CSV")
-#     assert validator.is_valid_dosage("100")
+    # Test valid cases
+    assert validator.is_valid_filename("CLINICALDATA_20240101120000.CSV")
+    assert validator.is_valid_dosage("100")
     
-#     # Test invalid cases
-#     assert not validator.is_valid_filename("wrong.csv")
-#     assert not validator.is_valid_dosage("-10")
-#     assert not validator.is_valid_dosage("abc")
+    # Test invalid cases
+    assert not validator.is_valid_filename("wrong.csv")
+    assert not validator.is_valid_dosage("-10")
+    assert not validator.is_valid_dosage("abc")
 
-# # ========== INTEGRATION TEST ==========
-# # Test with actual CSV file
+# ========== INTEGRATION TEST ==========
+# Test with actual CSV file
 
-# def test_csv_validation():
-#     """Test creating and reading a CSV file"""
-#     # Create temp CSV file
-#     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-#         writer = csv.writer(f)
-#         writer.writerow(["PatientID", "Dosage_mg"])
-#         writer.writerow(["P001", "100"])
-#         temp_path = f.name
+def test_csv_validation():
+    """Test creating and reading a CSV file"""
+    # Create temp CSV file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        writer = csv.writer(f)
+        writer.writerow(["PatientID", "Dosage_mg"])
+        writer.writerow(["P001", "100"])
+        temp_path = f.name
     
-#     # Read and validate
-#     with open(temp_path, 'r') as f:
-#         reader = csv.reader(f)
-#         rows = list(reader)
+    # Read and validate
+    with open(temp_path, 'r') as f:
+        reader = csv.reader(f)
+        rows = list(reader)
         
-#         assert len(rows) == 2
-#         assert rows[0][0] == "PatientID"
-#         assert rows[1][1] == "100"
+        assert len(rows) == 2
+        assert rows[0][0] == "PatientID"
+        assert rows[1][1] == "100"
     
-#     # Clean up
-#     import os
-#     os.unlink(temp_path)
+    # Clean up
+    import os
+    os.unlink(temp_path)
 
 # # ========== RUN ALL TESTS ==========
 # def run_tests():
