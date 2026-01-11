@@ -114,6 +114,7 @@ class ClinicalDataValidator:
     def _generate_guid(self):
             """Generate GUID using external API with fallback"""
             api_url = "https://www.uuidtools.com/api/generate/v4"
+            max_retries = 3
             
             for attempt in range(max_retries):
                 try:
