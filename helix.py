@@ -10,6 +10,8 @@ from pathlib import Path
 import threading
 import queue
 import sys
+import requests
+import time
 
 class ClinicalDataProcessor:
     """Handles FTP connection and file operations for PAGH Clinical Data"""
@@ -110,20 +112,88 @@ class ClinicalDataValidator:
         self.processed_files_log.write_text("\n".join(sorted(self.processed_files)))
     
     def _generate_guid(self):
-        """Generate unique GUID for error tracking"""
-        return str(uuid.uuid4())
+            """Generate GUID using external API with fallback"""
+            api_url = "https://www.uuidtools.com/api/generate/v4"
+            
+            for attempt in range(max_retries):
+                try:
+                    response = requests.get(api_url, timeout=5)
+                    if response.status_code == 200:
+                        guids = response.json()
+                        if guids and isinstance(guids, list) and len(guids) > 0:
+                            return guids[0]  # Return the first GUID
+                    
+                    # If we got here but no valid response, raise an exception
+                    raise Exception(f"Invalid API response: {response.status_code}")
+                    
+                except requests.exceptions.Timeout:
+                    if attempt < max_retries - 1:
+                        time.sleep(1)  # Wait before retry
+                        continue
+                    else:
+                        self._log_api_failure("Timeout")
+                        break
+                except requests.exceptions.ConnectionError:
+                    if attempt < max_retries - 1:
+                        time.sleep(1)
+                        continue
+                    else:
+                        self._log_api_failure("Connection Error")
+                        break
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        time.sleep(1)
+                        continue
+                    else:
+                        self._log_api_failure(str(e))
+                        break
+            
+            # Fallback to local UUID generation
+            fallback_guid = str(uuid.uuid4())
+            self._log_api_failure(f"Using fallback GUID: {fallback_guid}")
+            return fallback_guid
     
-    def _log_error(self, filename, error_details):
-        """Log error with GUID and timestamp"""
+    def _log_api_failure(self, error_message):
+        """Log API failures for monitoring"""
+        api_log_path = self.error_dir / "api_failures.log"
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        guid = self._generate_guid()
-        log_entry = f"[{timestamp}] GUID: {guid} | File: {filename} | Error: {error_details}\n"
         
-        error_log_path = self.error_dir / "error_report.log"
-        with open(error_log_path, "a") as f:
+        log_entry = f"[{timestamp}] API Failure: {error_message}\n"
+        with open(api_log_path, "a") as f:
             f.write(log_entry)
-        return guid, log_entry
+        
     
+        def _log_error(self, filename, error_details, status_queue=None):
+            """Log error with API-generated GUID and timestamp"""
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Generate GUID via API
+            if status_queue:
+                status_queue.put(("  → Generating GUID via API...", "info"))
+            
+            guid = self._generate_guid()
+            
+            # Check if it's a fallback GUID
+            is_fallback = not guid.startswith("API:")
+            if is_fallback:
+                guid_source = "Local Fallback"
+            else:
+                guid_source = "API"
+                # Remove the "API:" prefix for cleaner display
+                guid = guid[4:]
+            
+            # Create structured log entry
+            log_entry = f"[{timestamp}] GUID: {guid} | Source: {guid_source} | File: {filename} | Error: {error_details}\n"
+            
+            error_log_path = self.error_dir / "error_report.log"
+            with open(error_log_path, "a") as f:
+                f.write(log_entry)
+            
+            if status_queue:
+                status_queue.put((f"  📝 Error logged with {guid_source} GUID: {guid}", "warning"))
+            
+            return guid, log_entry
+        
     def _validate_filename_pattern(self, filename, status_queue=None):
         """Validate filename against CLINICALDATA_YYYYMMDDHHMMSS.csv pattern"""
         pattern = r'^CLINICALDATA_\d{14}\.CSV$'

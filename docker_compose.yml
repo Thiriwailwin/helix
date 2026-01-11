@@ -1,0 +1,17 @@
+version: '3.8' 
+ 
+services: 
+  helixsoft: 
+    build: . 
+    container_name: helix-app 
+    environment: 
+      - DISPLAY=host.docker.internal:0.0 
+      - QT_X11_NO_MITSHM=1 
+    volumes: 
+      - ./data:/app/data 
+      - ./logs:/app/logs 
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro 
+      - ~/.Xauthority:/root/.Xauthority:ro 
+    network_mode: "host"  
+    stdin_open: true 
+    tty: true
