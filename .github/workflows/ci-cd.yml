@@ -1,0 +1,154 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*.*.*' ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: thiriwailwin/helix-app
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up QEMU for multi-platform builds (optional)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # Step 3: Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 4: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 5: Extract metadata (tags, labels)
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+
+      # Step 6: Build and push Docker image
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64  # Add more platforms if needed: linux/arm64,linux/arm/v7
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          
+      # Step 7: Generate and push updated docker-compose.yml
+      - name: Generate updated docker-compose.yml
+        run: |
+          cat > docker-compose.prod.yml << 'EOF'
+          version: '3.8'
+          
+          services:
+            helixsoft:
+              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+              container_name: helix-app
+              restart: unless-stopped
+              environment:
+                - DISPLAY=host.docker.internal:0.0
+                - QT_X11_NO_MITSHM=1
+              volumes:
+                - helix_data:/app/data
+                - helix_logs:/app/logs
+                - /tmp/.X11-unix:/tmp/.X11-unix:ro
+              network_mode: "host"
+              stdin_open: true
+              tty: true
+          
+          volumes:
+            helix_data:
+            helix_logs:
+          EOF
+          
+          # Create README with pull instructions
+          cat > DEPLOYMENT.md << 'EOF'
+          # Deployment Instructions
+          
+          ## Pull and Run Latest Image
+          
+          ```bash
+          # Create directories for data persistence
+          mkdir -p ./data ./logs
+          
+          # Pull latest image
+          docker pull thiriwailwin/helix-app:latest
+          
+          # Run with docker-compose
+          docker-compose -f docker-compose.prod.yml up -d
+          
+          # Or run directly
+          docker run -d \
+            --name helix-app \
+            -e DISPLAY=host.docker.internal:0.0 \
+            -e QT_X11_NO_MITSHM=1 \
+            -v ./data:/app/data \
+            -v ./logs:/app/logs \
+            -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
+            --network host \
+            thiriwailwin/helix-app:latest
+          ```
+          
+          ## Update Existing Container
+          
+          ```bash
+          # Stop and remove old container
+          docker stop helix-app && docker rm helix-app
+          
+          # Pull latest image
+          docker pull thiriwailwin/helix-app:latest
+          
+          # Run new container
+          docker-compose -f docker-compose.prod.yml up -d
+          ```
+          EOF
+
+      # Step 8: Create GitHub Release (on tags)
+      - name: Create Release on Tag
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            docker-compose.prod.yml
+            DEPLOYMENT.md
+          generate_release_notes: true
+
+      # Step 9: Notify success (optional)
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Docker image built and pushed successfully!"
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          echo "Tags: ${{ steps.meta.outputs.tags }}"
