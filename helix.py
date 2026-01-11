@@ -471,7 +471,7 @@ class PAGHClinicalDataManager:
         self.displayed_files = []
         
         # Default configuration
-        self.ftp_host = tk.StringVar(value="127.0.0.1")
+        self.ftp_host = tk.StringVar(value="localhost")
         self.ftp_user = tk.StringVar(value="thiri")
         self.ftp_pass = tk.StringVar(value="123")
         self.remote_dir = tk.StringVar(value="")
