@@ -82,11 +82,15 @@ class TestClinicalDataValidator:
             writer.writerow(header)
             writer.writerows(data)
         
-        return test_file
+        # Store the file path as instance variable instead of returning
+        self.test_file_path = test_file
     
     def test_csv_validation_valid(self):
         """Test validation of valid CSV content"""
-        test_file = self.test_create_valid_csv_file()
+        # First call the method that creates the file
+        self.test_create_valid_csv_file()
+        # use the stored file path
+        test_file = self.test_file_path
         
         is_valid, errors, record_count = self.validator._validate_csv_content(
             test_file, 
