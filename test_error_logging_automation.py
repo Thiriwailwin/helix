@@ -73,11 +73,9 @@ class TestErrorLoggingAutomation(unittest.TestCase):
             ("DATA_ERROR", "Missing required field")
         ]
         
-        # Log all errors
         for error_type, message in errors:
             self.logger.log_error(error_type, message)
         
-        # Count lines in log file
         with open(self.logger.log_file, 'r') as f:
             lines = f.readlines()
         
