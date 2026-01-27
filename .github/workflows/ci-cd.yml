@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build, Test and Push Docker Image
 
 on:
   push:
@@ -12,11 +12,45 @@ env:
   IMAGE_NAME: thiriwailwin/helix-app
 
 jobs:
+  # Test job that runs pytest
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'  # Use your Python version
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          # If you have dev dependencies, install them too
+          # pip install -r requirements-dev.txt
+      
+      - name: Run tests with pytest
+        run: |
+          pytest -v --cov=./ --cov-report=xml  # Add coverage reporting
+      
+      - name: Upload coverage to Codecov (optional)
+        uses: codecov/codecov-action@v3
+        if: always()
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+  # Build and push job - now depends on tests passing
   build-and-push:
+    needs: test  # This ensures tests run before build
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    # Only run on main/master pushes or tags, not on PRs
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.base_ref == 'refs/heads/main' || github.base_ref == 'refs/heads/master')
 
     steps:
       # Step 1: Checkout code
