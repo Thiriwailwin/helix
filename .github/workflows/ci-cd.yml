@@ -27,17 +27,31 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          # If you have dev dependencies, install them too
-          # pip install -r requirements-dev.txt
+          # Check if requirements.txt exists
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+          
+          # Install pytest and pytest-cov for testing
+          pip install pytest pytest-cov
+          
+          # If you have a requirements-dev.txt file
+          if [ -f "requirements-dev.txt" ]; then
+            pip install -r requirements-dev.txt
+          fi
+      
+      - name: Verify pytest installation
+        run: |
+          python -m pytest --version
+          python -c "import pytest; print(f'pytest version: {pytest.__version__}')"
       
       - name: Run tests with pytest
         run: |
-          pytest -v --cov=./ --cov-report=xml  # Add coverage reporting
+          python -m pytest -v --cov=./ --cov-report=xml  # Use python -m pytest
       
       - name: Upload coverage to Codecov (optional)
+        if: success()
         uses: codecov/codecov-action@v3
-        if: always()
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
