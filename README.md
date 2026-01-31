@@ -22,3 +22,12 @@ Singleton FTP Client: Implements the Singleton design pattern for the FTPClient 
 Comprehensive Logging: Detailed logs for monitoring connection status, file transfers, validation results, and errors.
 
 Post-Validation Actions: Configurable actions for processed files (e.g., move to processed/ or failed/ folders on the server, local archiving).
+
+Prerequisites
+Python 3.8+
+
+PostgreSQL 12+ database instance
+
+FTP Server(s) hosting the sensor data files
+
+Required Python packages (see requirements.txt or pyproject.toml)
