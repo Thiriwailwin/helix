@@ -1,33 +1,87 @@
-FTP CSV Validator
-Overview
-FTP CSV Validator is a Python application designed to automate the process of downloading, validating, and processing CSV files from a remote FTP server. It is ideal for data ingestion pipelines, ETL processes, or any workflow that requires reliable, scheduled validation of data from an FTP source.
+Clinical Data Validation System - PAGH
+Project Overview
+A secure, automated system for retrieving and validating clinical data from legacy FTP systems at Port Avalon General Hospital (PAGH). This Python-based solution processes CSV files through rigorous validation pipelines and provides dual interfaces for technical and clinical users.
+
+Core Architecture
+System Components
+FTP Client Module
+
+Secure TLS/SSL connection management
+
+Automatic file discovery and retrieval
+
+Connection pooling with timeout handling
+
+Validation Engine
+
+Sequential data integrity checks
+
+Custom validation rules for clinical data standards
+
+Real-time error reporting with detailed diagnostics
+
+File Management System
+
+Intelligent routing based on validation outcomes
+
+Timestamped archival with version tracking
+
+Duplicate detection and prevention
+
+User Interfaces
+
+GUI Application: Tkinter-based for clinical analysts
+
+CLI Tool: For automated batch processing and integration
+
+Technical Stack
+Language: Python 3.9+
+
+GUI Framework: Tkinter
+
+Data Processing: pandas, NumPy
+
+Security: cryptography, SSL/TLS
+
+Containerization: Docker, Docker Compose
+
+Testing: pytest, unittest
+
+CI/CD: GitHub Actions
 
 Key Features
-Secure FTP Connectivity: Connects to FTP/S servers using credentials and secure modes (TLS/SSL).
+🔐 Security & Compliance
+Encrypted FTP connections (FTPS/SFTP)
 
-Automated File Discovery: Lists and filters files in a target remote directory based on naming patterns (e.g., *.csv).
+Audit trails for all file operations
 
-Robust CSV Validation: Performs structural validation on downloaded CSV files, including checks for:
+HIPAA-compliant data handling procedures
 
-Correct column count and header names.
+Secure credential management via environment variables
 
-Data type integrity (e.g., integers, dates, strings).
+📊 Validation Pipeline
+Structural Validation
 
-Mandatory field presence and absence of empty values.
+File format and encoding checks
 
-Configurable Processing: Highly customizable validation rules and file handling through a central configuration file.
+Column count and header verification
 
-Singleton FTP Client: Implements the Singleton design pattern for the FTPClient to ensure a single, managed connection is used throughout the application lifecycle, preventing connection conflicts and resource leaks.
+Data type consistency
 
-Comprehensive Logging: Detailed logs for monitoring connection status, file transfers, validation results, and errors.
+Clinical Data Rules
 
-Post-Validation Actions: Configurable actions for processed files (e.g., move to processed/ or failed/ folders on the server, local archiving).
+Required field presence
 
-Prerequisites
-Python 3.8+
+Value range validation
 
-PostgreSQL 12+ database instance
+Cross-field dependency checks
 
-FTP Server(s) hosting the sensor data files
+Date format and chronology validation
 
-Required Python packages (see requirements.txt or pyproject.toml)
+Business Logic
+
+Patient identifier uniqueness
+
+Clinical code validity
+
+Referential integrity
