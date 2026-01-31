@@ -30,4 +30,4 @@ PostgreSQL 12+ database instance
 
 FTP Server(s) hosting the sensor data files
 
-Required Python packages (see requirements.txt or pyproject.toml)
+Required Python packages (see requirements.txt or pyproject.toml0
